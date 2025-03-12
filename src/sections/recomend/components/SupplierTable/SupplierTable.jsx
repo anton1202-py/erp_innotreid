@@ -1,16 +1,17 @@
 import {
-	Button,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material'
 import React from 'react'
 import { BsCheck2 } from 'react-icons/bs'
 
 export default function SupplierTable({ data, regions, onSubmitProduction }) {
+  console.log(regions);
   return (
     <TableContainer style={{ overflowX: 'auto' }}>
       <Table>
@@ -65,7 +66,7 @@ export default function SupplierTable({ data, regions, onSubmitProduction }) {
                 {row.product}
               </TableCell>
               {regions.map((region, index) => {
-                const regionData = row.data.find((r) => r.warehouse__oblast_okrug_name === region);
+                const regionData = row.data.find((r) => r.cluster__name === region);
                 return (
                   <React.Fragment key={`${row.product}-${region}-${index}`}>
                     <TableCell align="center">{regionData ? regionData.quantity : ' '}</TableCell>

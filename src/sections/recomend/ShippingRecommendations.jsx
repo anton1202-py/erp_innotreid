@@ -88,7 +88,7 @@ export default function ShippingRecommendations() {
       allData.forEach((row) => {
         const rowData = { product: row.product };
         regions.forEach((region) => {
-          const regionData = row.data.find((r) => r.warehouse__oblast_okrug_name === region);
+          const regionData = row.data.find((r) => r.cluster__name === region);
           rowData[`${region}-quantity`] = regionData ? regionData.quantity : 0;
           rowData[`${region}-days_left`] = regionData ? regionData.days_left : 0;
         });

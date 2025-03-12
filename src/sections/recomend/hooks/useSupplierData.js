@@ -23,8 +23,8 @@ export function useSupplierData({
       const queryParams = new URLSearchParams({
         page_size: rowsPerPage,
         page: page + 1,
-        warehouse__oblast_okrug_name: regionFilter || '',
-        service: serviceFilter || 'wildberries',
+        cluster_id: regionFilter || '',
+        marketplace_type: serviceFilter || 'wildberries',
         article: productCodeFilter || '',
         sort: sort || '',
       }).toString();
@@ -39,7 +39,7 @@ export function useSupplierData({
       const uniqueRegions = [
         ...new Set(
           response.data.results.flatMap((row) =>
-            row.data.map((region) => region.warehouse__oblast_okrug_name)
+            row.data.map((region) => region.cluster__name)
           )
         ),
       ];

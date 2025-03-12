@@ -26,7 +26,7 @@ export default function SupplierFilters({
         {clusters
           .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
           .map((cluster) => (
-            <MenuItem key={cluster.id} value={cluster.name}>
+            <MenuItem key={cluster.id} value={cluster.id}>
               {cluster.name || 'Не указано'}
             </MenuItem>
           ))}
