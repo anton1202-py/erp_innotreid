@@ -249,14 +249,11 @@
 // //   },
 // // };
 
-
-
 // // import { useState } from 'react';
 // // import { Container, Tabs, Tab } from '@mui/material';
 // // import ProductionRecommendations from '../ProductionRecommendations';
 // // import ShippingRecommendations from '../ShippingRecommendations';
 // // import ShippingPriority from '../ShippingPriority';
-
 
 // // export default function RecomendView() {
 // //   const [currentTab, setCurrentTab] = useState(0);
@@ -280,7 +277,6 @@
 // //   );
 // // }
 
-
 // import { useState } from 'react';
 // import { Container, Tabs, Tab, CircularProgress, Typography } from '@mui/material';
 // import React, { Suspense } from 'react';
@@ -296,8 +292,6 @@
 //   const handleChange = (event, newValue) => {
 //     setCurrentTab(newValue);
 //   };
-
-  
 
 //   return (
 //     <Container>
@@ -330,29 +324,22 @@
 //   );
 // }
 
-
-import { useState } from 'react';
 import {
-  Container,
-  Tabs,
-  Tab,
-  CircularProgress,
-  Typography,
-  Button,
   Alert,
-  Snackbar,
   Card,
-} from '@mui/material';
-import React, { Suspense } from 'react';
-import { axiosInstance } from 'src/api/api';
+  CircularProgress,
+  Container,
+  Snackbar,
+  Tab,
+  Tabs,
+  Typography
+} from '@mui/material'
+import React, { Suspense, useState } from 'react'
+import { axiosInstance } from 'src/api/api'
 
 // Ленивое подключение компонентов
-const ProductionRecommendations = React.lazy(() =>
-  import('../ProductionRecommendations')
-);
-const ShippingRecommendations = React.lazy(() =>
-  import('../ShippingRecommendations')
-);
+const ProductionRecommendations = React.lazy(() => import('../ProductionRecommendations'));
+const ShippingRecommendations = React.lazy(() => import('../ShippingRecommendations'));
 const ShippingPriority = React.lazy(() => import('../ShippingPriority'));
 
 export default function RecomendView() {
@@ -371,7 +358,7 @@ export default function RecomendView() {
       const idCompany = localStorage.getItem('selectedCompany');
       const url = `/companies/${idCompany}/calculate-recomand/`;
 
-      console.log("Fetching data from URL:", url);
+      console.log('Fetching data from URL:', url);
       const response = await axiosInstance.get(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -381,7 +368,7 @@ export default function RecomendView() {
       // Показать уведомление об успешном начале расчёта
       setAlertOpen(true);
     } catch (error) {
-      console.error("Error fetching data:", error.message);
+      console.error('Error fetching data:', error.message);
     } finally {
       setIsLoading(false);
     }
@@ -406,14 +393,13 @@ export default function RecomendView() {
         </Button> */}
       </div>
 
-     <Card className='p-3'>
-
-     <Tabs value={currentTab} onChange={handleChange}>
-        <Tab label="Рекомендации производства" />
-        <Tab label="Рекомендации отгрузок" />
-        <Tab label="Приоритет отгрузок" />
-      </Tabs>
-     </Card>
+      <Card className="p-3">
+        <Tabs value={currentTab} onChange={handleChange}>
+          <Tab label="Рекомендации производства" />
+          <Tab label="Рекомендации отгрузок" />
+          <Tab label="Приоритет отгрузок" />
+        </Tabs>
+      </Card>
 
       {/* Используем Suspense для отображения индикатора загрузки */}
       {currentTab === 0 && (

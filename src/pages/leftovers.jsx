@@ -1,7 +1,5 @@
-import { Helmet } from 'react-helmet-async';
-import LeftoversView from 'src/sections/leftlovers/view/leftovers-view';
-
-import { ProductsView } from 'src/sections/products/view';
+import { Helmet } from 'react-helmet-async'
+import LeftoversView from 'src/sections/leftlovers/view/leftovers-view'
 
 // ----------------------------------------------------------------------
 
@@ -12,7 +10,7 @@ export default function LeftoversPage() {
         <title> Остатки </title>
       </Helmet>
 
-      <LeftoversView/>
+      <LeftoversView />
     </>
   );
 }

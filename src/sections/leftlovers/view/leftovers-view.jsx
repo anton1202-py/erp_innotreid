@@ -1,29 +1,25 @@
-import { useEffect, useState } from 'react';
 import {
-  Card,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Button,
-  Container,
-  Typography,
-  TablePagination,
-  Tabs,
-  Tab,
+  Card,
   CircularProgress,
-} from '@mui/material';
-import { PiMicrosoftExcelLogo } from 'react-icons/pi';
-import UserTableToolbar from '../user-table-toolbar';
-import { axiosInstance } from 'src/api/api';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
-import { format } from 'date-fns';
+  Container,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material'
+import { format } from 'date-fns'
+import ExcelJS from 'exceljs'
+import { saveAs } from 'file-saver'
+import { useState } from 'react'
+import { PiMicrosoftExcelLogo } from 'react-icons/pi'
+import { axiosInstance } from 'src/api/api'
+import UserTableToolbar from '../user-table-toolbar'
+import ClusterInfoDialog from './components/ClusterInfoDialog/ClusterInfoDialog'
+import ProductsTable from './components/ProductsTable/ProductsTable'
+import { useProducts } from './hooks/useProducts'
 
-const tabs = [
+const tabsData = [
   { label: 'Общие', service: '' },
   { label: 'Wildberries', service: 'wildberries' },
   { label: 'Ozon', service: 'ozon' },
@@ -34,69 +30,42 @@ export default function ProductsView() {
   const [currentTab, setCurrentTab] = useState('Общие');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(100);
-  const [selected, setSelected] = useState([]);
   const [filterName, setFilterName] = useState('');
-  const [roles, setRoles] = useState({});
-  const [pageSize, setPageSize] = useState(500);
-  const [dates, setDates] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
   const [sort, setSort] = useState('');
-  const [totalProducts, setTotalProducts] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
-  const fetchRoles = async () => {
-    setIsLoading(true); // Начало загрузки
-    try {
-      const token = JSON.parse(localStorage.getItem('token')).access;
-      const idCompany = localStorage.getItem('selectedCompany'); // Получаем ID компании из localStorage
-      const selectedTab = tabs.find((tab) => tab.label === currentTab);
-      const serviceParam = selectedTab?.service ? `&service=${selectedTab.service}` : '';
+  // Popup state
+  const [openPopup, setOpenPopup] = useState(false);
+  const [popupData, setPopupData] = useState(null);
 
-      let url = `/companies/${idCompany}/stocks/?page_size=${rowsPerPage}&page=${
-        page + 1
-      }${serviceParam}`;
+  const { roles, dates, totalProducts, isLoading, fetchRoles } = useProducts({
+    currentTab,
+    page,
+    rowsPerPage,
+    filterName,
+    startDate,
+    endDate,
+    sort,
+  });
 
-      if (startDate && endDate) {
-        const formattedStartDate = format(new Date(startDate), 'yyyy-MM-dd');
-        const formattedEndDate = format(new Date(endDate), 'yyyy-MM-dd');
-        url += `&date_from=${formattedStartDate}&date_to=${formattedEndDate}`;
-      }
-      if (filterName) {
-        url += `&article=${filterName}`;
-      }
-      if (sort) {
-        url += `&sort=${sort}`;
-      }
+  // Преобразуем объект roles в массив для отображения
+  const displayedData =
+    Object.entries(roles).map(([key, value]) => ({
+      id: key,
+      ...value,
+    })) || [];
 
-      const response = await axiosInstance.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setPageSize(response.data.product_count || 500);
-      setTotalProducts(response.data.product_count || 0); // Обновляем общее количество продуктов
-      setRoles(response.data.data);
-
-      const allDates = Object.values(response.data.data)
-        .flatMap((item) => Object.keys(item))
-        .filter((key) => key !== 'id');
-      setDates(Array.from(new Set(allDates)).sort((a, b) => new Date(b) - new Date(a)));
-    } catch (error) {
-      console.error('Failed to fetch roles', error);
-    } finally {
-      setIsLoading(false); // Завершение загрузки
-    }
+  const handleCellClick = (clusterInfo) => {
+    setPopupData(clusterInfo);
+    setOpenPopup(true);
   };
 
-  // useEffect(() => {
-  //   fetchRoles();
-  // }, [currentTab, page, rowsPerPage, startDate, endDate, filterName, sort]);
-  useEffect(() => {
-    fetchRoles();
-  }, [currentTab, page, rowsPerPage]);
+  const handleClosePopup = () => {
+    setOpenPopup(false);
+    setPopupData(null);
+  };
 
   const handleFilterByName = (event) => {
     setFilterName(event.target.value);
@@ -108,27 +77,25 @@ export default function ProductsView() {
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0); // Сбросить на первую страницу
+    setPage(0);
   };
 
   const handleTabChange = (event, newTab) => {
     setCurrentTab(newTab);
-    setPage(0); // Сбросить на первую страницу
+    setPage(0);
   };
 
   const handleSearch = () => {
-    fetchRoles(); // Выполняем поиск с параметрами
+    fetchRoles();
   };
 
   const handleExportToExcel = async () => {
-    setIsExporting(true); // Устанавливаем состояние загрузки для кнопки
-
+    setIsExporting(true);
     try {
       const token = JSON.parse(localStorage.getItem('token')).access;
-      const idCompany = localStorage.getItem('selectedCompany'); // Получаем ID компании из localStorage
-      const selectedTab = tabs.find((tab) => tab.label === currentTab);
+      const idCompany = localStorage.getItem('selectedCompany');
+      const selectedTab = tabsData.find((tab) => tab.label === currentTab);
       const serviceParam = selectedTab?.service ? `&service=${selectedTab.service}` : '';
-
       let url = `/companies/${idCompany}/stocks/?page_size=${totalProducts}${serviceParam}`;
 
       if (startDate && endDate) {
@@ -144,44 +111,29 @@ export default function ProductsView() {
       }
 
       const response = await axiosInstance.get(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const allData = response.data.data;
-
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Sales Data');
-
       worksheet.addRow(['Артикул', ...dates]);
-
       Object.entries(allData).forEach(([key, value]) => {
-        worksheet.addRow([key, ...dates.map((date) => value[date] || 0)]);
+        worksheet.addRow([key, ...dates.map((date) => value[date]?.common || 0)]);
       });
-
       const buffer = await workbook.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), 'sales_data.xlsx');
     } catch (error) {
       console.error('Failed to export to Excel', error);
     } finally {
-      setIsExporting(false); // Завершаем состояние загрузки для кнопки
+      setIsExporting(false);
     }
   };
-
-  const currentData =
-    Object.entries(roles).map(([key, value]) => ({
-      id: key,
-      ...value,
-    })) || [];
-
-  const displayedData = currentData;
 
   return (
     <Container>
       <Stack direction="row" alignItems="center" justifyContent="space-between" mb={5}>
         <Typography variant="h4">Остатки</Typography>
-
         <Button
           variant="contained"
           color="inherit"
@@ -202,7 +154,7 @@ export default function ProductsView() {
           scrollButtons="auto"
           allowScrollButtonsMobile
         >
-          {tabs.map((tab) => (
+          {tabsData.map((tab) => (
             <Tab key={tab.label} label={tab.label} value={tab.label} />
           ))}
         </Tabs>
@@ -212,60 +164,32 @@ export default function ProductsView() {
           Загрузка данных...
         </Typography>
       ) : (
-        <>
-          <Card>
-            <UserTableToolbar
-              numSelected={selected.length}
-              filterName={filterName}
-              onFilterName={handleFilterByName}
-              startDate={startDate}
-              endDate={endDate}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
-              onSearch={handleSearch}
-              isLoading={isLoading}
-              sort={sort}
-              setSort={setSort}
-            />
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell align="center">Артикул</TableCell>
-                    {dates.map((date) => (
-                      <TableCell align="center" key={date}>
-                        {date}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {displayedData.map((row) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell align="center">{row.id}</TableCell>
-                      {dates.map((date) => (
-                        <TableCell align="center" key={date}>
-                          {row[date] || 0}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <TablePagination
-              rowsPerPageOptions={[100, 500, 1000]}
-              component="div"
-              count={totalProducts}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </Card>
-        </>
+        <Card>
+          <UserTableToolbar
+            filterName={filterName}
+            onFilterName={handleFilterByName}
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            onSearch={handleSearch}
+            isLoading={isLoading}
+            sort={sort}
+            setSort={setSort}
+          />
+          <ProductsTable
+            displayedData={displayedData}
+            dates={dates}
+            totalProducts={totalProducts}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            onCellClick={handleCellClick}
+          />
+        </Card>
       )}
+      <ClusterInfoDialog open={openPopup} popupData={popupData} onClose={handleClosePopup} />
     </Container>
   );
 }
